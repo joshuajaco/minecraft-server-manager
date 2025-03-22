@@ -1,0 +1,39 @@
+{
+  "name": "minecraft-server-manager",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": "./dist/bin.js",
+  "scripts": {
+    "build": "pnpm run \"/^build:.*/\"",
+    "build:bin": "tsc -p tsconfig.bin.json",
+    "build:next": "next build",
+    "dev": "next dev",
+    "format": "prettier -w .",
+    "start": "next start",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@dbus-types/systemd": "^0.0.5",
+    "@libsql/client": "^0.15.1",
+    "commander": "^13.1.0",
+    "dbus-next": "^0.10.2",
+    "dbus-ts": "^0.0.7",
+    "debug": "^4.4.0",
+    "next": "15.3.0-canary.23",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "x11": "^2.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.17",
+    "@types/node": "^22.13.13",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4.0.17",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "packageManager": "pnpm@10.7.0"
+}
