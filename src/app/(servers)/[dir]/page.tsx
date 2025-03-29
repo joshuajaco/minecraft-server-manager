@@ -8,7 +8,7 @@ import { notFound } from "next/navigation";
 import { Server } from "../../_components/Server";
 import { Button, TextField } from "../../../components";
 import { Err, Ok, Result } from "../../../result";
-import { run } from "../../../minecraft-server";
+import { getLogs, run } from "../../../minecraft-server";
 import { Form } from "../../../form";
 
 export default async function DetailsPage({
@@ -21,8 +21,9 @@ export default async function DetailsPage({
   const server = await getServer(dir);
   if (!server) notFound();
   return (
-    <div className="border rounded-lg">
+    <div className="border rounded-lg flex flex-col overflow-auto grow">
       <Server {...server} />
+      <Logs dir={dir} />
       <Form
         reset
         action={runCommand}
@@ -37,6 +38,11 @@ export default async function DetailsPage({
       </Form>
     </div>
   );
+}
+
+async function Logs({ dir }: { dir: string }) {
+  const logs = await getLogs(dir);
+  return <pre className="overflow-auto grow px-4 py-2 border-b">{logs}</pre>;
 }
 
 async function getServer(dir: string): Promise<MinecraftServer | null> {

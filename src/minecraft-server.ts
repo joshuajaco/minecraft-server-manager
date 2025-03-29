@@ -1,12 +1,16 @@
 import "server-only";
 import path from "node:path";
 import fs from "node:fs/promises";
-import { env } from "./env";
+import { LibsqlError } from "@libsql/client";
+import * as cp from "node:child_process";
+import { promisify } from "node:util";
 import dbus from "dbus-next";
 import _ from "@dbus-types/systemd";
+import { env } from "./env";
 import { client } from "./db";
 import { Err, Ok, Result } from "./result";
-import { LibsqlError } from "@libsql/client";
+
+const exec = promisify(cp.exec);
 
 const bus = dbus.systemBus();
 
@@ -184,6 +188,15 @@ export async function run(dir: string, command: string) {
   const fileHandle = await fs.open(`/run/${getServiceName(dir)}.stdin`, "w");
   await fileHandle.write(command + "\n");
   await fileHandle.close();
+}
+
+export async function getLogs(dir: string) {
+  const { stdout, stderr } = await exec(
+    `journalctl -u ${getServiceName(dir)} -n 100 --no-pager`,
+    { encoding: "utf-8" },
+  );
+  if (stderr) console.error("journalctl error", stderr);
+  return stdout;
 }
 
 async function getManager() {

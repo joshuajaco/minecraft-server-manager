@@ -124,7 +124,7 @@ async function ServerImportButton() {
 async function ServerList() {
   const servers = await getServers();
   return (
-    <div className="border rounded-lg">
+    <div className="border rounded-lg overflow-auto">
       <Refresh tags={["servers"]} />
       {servers.map((server) => (
         <Server key={server.name} {...server} />

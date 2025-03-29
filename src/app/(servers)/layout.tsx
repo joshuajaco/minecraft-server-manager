@@ -9,7 +9,7 @@ import { authenticate } from "../../auth";
 
 export default function ServersLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="grid gap-6 p-4 container mx-auto">
+    <div className="flex flex-col max-h-screen min-h-screen gap-6 p-4 container mx-auto">
       <div className="flex items-center gap-2">
         <h1 className="text-xl">
           <Link href="/" prefetch={false} className="flex items-center gap-2">
@@ -23,7 +23,9 @@ export default function ServersLayout({ children }: { children: ReactNode }) {
           </Button>
         </form>
       </div>
-      <div className="px-2 grid gap-4">{children}</div>
+      <div className="px-2 flex flex-col gap-4 overflow-auto grow">
+        {children}
+      </div>
     </div>
   );
 }
