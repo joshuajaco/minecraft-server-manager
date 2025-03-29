@@ -99,7 +99,8 @@ async function ServerImportButton() {
     getServers(),
   ]);
   const dirs = allDirs.filter(
-    (dir) => !servers.some((server) => server.dir === dir),
+    (dir) =>
+      !dir.startsWith(".") && !servers.some((server) => server.dir === dir),
   );
   return (
     <DialogTrigger>
