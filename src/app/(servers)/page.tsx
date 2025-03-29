@@ -1,19 +1,16 @@
 import fs from "node:fs/promises";
 import { Suspense } from "react";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import {
   unstable_cacheTag as cacheTag,
   unstable_cacheLife as cacheLife,
   revalidateTag,
 } from "next/cache";
-import Image from "next/image";
-import { Err, Ok, Result } from "../result";
-import { env } from "../env";
-import { client, MinecraftServer } from "../db";
-import { authenticate } from "../auth";
-import { Form } from "../form";
-import { _import, create } from "../minecraft-server";
+import { Err, Ok, Result } from "../../result";
+import { env } from "../../env";
+import { client, MinecraftServer } from "../../db";
+import { authenticate } from "../../auth";
+import { Form } from "../../form";
+import { _import, create } from "../../minecraft-server";
 import {
   Button,
   Modal,
@@ -23,74 +20,57 @@ import {
   TextField,
   Select,
   SelectItem,
-} from "../components";
-import Logo from "./icon1.svg";
-import { Server } from "./_components/Server";
-import { Autofill, capitalize, sanitize } from "./_components/Autofill";
-import { Refresh } from "./_components/Refresh";
+} from "../../components";
+import { Server } from "../_components/Server";
+import { Autofill, capitalize, sanitize } from "../_components/Autofill";
+import { Refresh } from "../_components/Refresh";
 
 export default async function HomePage() {
   await authenticate();
   return (
-    <div className="grid gap-6 p-4 container mx-auto">
-      <div className="flex items-center gap-2">
-        <Image alt="logo" src={Logo} height={48} />
-        <h1 className="text-xl">Minecraft Server Manager</h1>
-        <form className="ml-auto" action={logout}>
-          <Button variant="ghost" type="submit">
-            Logout
-          </Button>
-        </form>
-      </div>
-      <div className="px-2 grid gap-4">
-        <div className="flex gap-4">
-          <h2 className="text-3xl">Servers</h2>
-          <DialogTrigger>
-            <Button variant="secondary">Create</Button>
-            <Modal isDismissable>
-              <Dialog>
-                <Form
-                  action={createServer}
-                  validate={createServer.validate}
-                  className="px-2 grid gap-4"
-                >
-                  <Heading slot="title" className="text-3xl">
-                    Create Server
-                  </Heading>
-                  <Autofill transform={sanitize}>
-                    <TextField
-                      slot="source"
-                      autoFocus
-                      label="Name"
-                      name="name"
-                    />
-                    <TextField slot="target" label="Directory" name="dir" />
-                  </Autofill>
-                  <div className="flex gap-2">
-                    <Button type="submit">Create</Button>
-                    <Button slot="close" variant="secondary">
-                      Cancel
-                    </Button>
-                  </div>
-                </Form>
-              </Dialog>
-            </Modal>
-          </DialogTrigger>
-          <Suspense
-            fallback={
-              <Button variant="secondary" isDisabled>
-                Import
-              </Button>
-            }
-          >
-            <ServerImportButton />
-          </Suspense>
-        </div>
-        <Suspense fallback={null}>
-          <ServerList />
+    <>
+      <div className="flex gap-4">
+        <h2 className="text-3xl">Servers</h2>
+        <DialogTrigger>
+          <Button variant="secondary">Create</Button>
+          <Modal isDismissable>
+            <Dialog>
+              <Form
+                action={createServer}
+                validate={createServer.validate}
+                className="px-2 grid gap-4"
+              >
+                <Heading slot="title" className="text-3xl">
+                  Create Server
+                </Heading>
+                <Autofill transform={sanitize}>
+                  <TextField slot="source" autoFocus label="Name" name="name" />
+                  <TextField slot="target" label="Directory" name="dir" />
+                </Autofill>
+                <div className="flex gap-2">
+                  <Button type="submit">Create</Button>
+                  <Button slot="close" variant="secondary">
+                    Cancel
+                  </Button>
+                </div>
+              </Form>
+            </Dialog>
+          </Modal>
+        </DialogTrigger>
+        <Suspense
+          fallback={
+            <Button variant="secondary" isDisabled>
+              Import
+            </Button>
+          }
+        >
+          <ServerImportButton />
         </Suspense>
       </div>
-    </div>
+      <Suspense fallback={null}>
+        <ServerList />
+      </Suspense>
+    </>
   );
 }
 
@@ -166,13 +146,6 @@ async function getDirectories() {
   return entries
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
-}
-
-async function logout() {
-  "use server";
-  await authenticate();
-  (await cookies()).delete("session");
-  redirect("/login");
 }
 
 async function createServer({

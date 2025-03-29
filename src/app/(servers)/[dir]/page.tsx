@@ -1,11 +1,11 @@
-import { authenticate } from "../../auth";
-import { client, MinecraftServer } from "../../db";
+import { authenticate } from "../../../auth";
+import { client, MinecraftServer } from "../../../db";
 import {
   unstable_cacheLife as cacheLife,
   unstable_cacheTag as cacheTag,
 } from "next/cache";
 import { notFound } from "next/navigation";
-import { Server } from "../_components/Server";
+import { Server } from "../../_components/Server";
 
 export default async function DetailsPage({
   params,
@@ -17,7 +17,7 @@ export default async function DetailsPage({
   const server = await getServer(dir);
   if (!server) notFound();
   return (
-    <div>
+    <div className="border rounded-lg">
       <Server {...server} />
     </div>
   );
