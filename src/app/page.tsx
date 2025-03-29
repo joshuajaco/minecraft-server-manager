@@ -197,7 +197,7 @@ createServer.validate = async (
   const dir = formData.get("dir");
   if (typeof dir !== "string") return Err("Invalid form data");
   if (!dir.match(/^[a-zA-Z0-9-_]+$/)) return Err("Invalid directory");
-  return Ok({ name, dir });
+  return Ok({ name, dir: sanitizeDir(dir) });
 };
 
 async function importServer({
@@ -225,5 +225,13 @@ importServer.validate = async (
   const dir = formData.get("dir");
   if (typeof dir !== "string") return Err("Invalid form data");
   if (!dir.match(/^[a-zA-Z0-9-_]+$/)) return Err("Invalid directory");
-  return Ok({ name, dir });
+  return Ok({ name, dir: sanitizeDir(dir) });
 };
+
+function sanitizeDir(value: string): string {
+  return value
+    .trim()
+    .replace(/ /g, "-")
+    .replace(/[^a-zA-Z0-9-_]/g, "")
+    .toLowerCase();
+}
