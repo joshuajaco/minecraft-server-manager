@@ -5,7 +5,8 @@ import { env } from "./env";
 import dbus from "dbus-next";
 import _ from "@dbus-types/systemd";
 import { client } from "./db";
-import { Err } from "./result";
+import { Err, Ok, Result } from "./result";
+import { LibsqlError } from "@libsql/client";
 
 const bus = dbus.systemBus();
 
@@ -15,11 +16,44 @@ async function getDirectories(p: string) {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 }
-export async function create(name: string, _dir: string, createDir = true) {
-  await client.execute({
-    sql: "INSERT INTO 'minecraft-servers'(name, dir) VALUES (?, ?)",
-    args: [name, _dir],
-  });
+export async function create(
+  name: string,
+  _dir: string,
+  createDir = true,
+): Promise<Result<void, string>> {
+  try {
+    await client.execute({
+      sql: "INSERT INTO 'minecraft-servers'(name, dir) VALUES (?, ?)",
+      args: [name, _dir],
+    });
+  } catch (error) {
+    if (
+      error instanceof LibsqlError &&
+      error.code === "SQLITE_CONSTRAINT_UNIQUE"
+    ) {
+      const match = error.message.match(
+        /UNIQUE constraint failed: minecraft-servers\.(.+)/,
+      );
+
+      if (match && match[1]) {
+        let key;
+        switch (match[1]) {
+          case "name":
+            key = "Name";
+            break;
+          case "dir":
+            key = "Directory";
+            break;
+          default:
+            key = match[1];
+        }
+
+        return Err(`${key} already exists`);
+      }
+    }
+
+    throw error;
+  }
 
   const dir = path.join(env.MINECRAFT_PATH, _dir);
 
@@ -64,10 +98,12 @@ ListenFIFO=%t/${serviceName}.stdin
     path.join(env.SYSTEMD_PATH, `${serviceName}.socket`),
     socket,
   );
+
+  return Ok();
 }
 
 export async function _import(_dir: string, name: string) {
-  await create(name, _dir, false);
+  return create(name, _dir, false);
 }
 
 export async function _delete(

@@ -172,7 +172,8 @@ async function createServer({
 }): Promise<Result<string, string>> {
   "use server";
   await authenticate();
-  await create(name, dir);
+  const result = await create(name, dir);
+  if (!result.ok) return result;
   revalidateTag("servers");
   return Ok("Server created");
 }
@@ -199,7 +200,8 @@ async function importServer({
 }): Promise<Result<string, string>> {
   "use server";
   await authenticate();
-  await _import(dir, name);
+  const result = await _import(dir, name);
+  if (!result.ok) return result;
   revalidateTag("servers");
   return Ok("Server imported");
 }
