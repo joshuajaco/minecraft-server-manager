@@ -6,6 +6,7 @@ import * as cp from "node:child_process";
 import { promisify } from "node:util";
 import dbus from "dbus-next";
 import _ from "@dbus-types/systemd";
+import { LOG_LINES } from "./constants";
 import { env } from "./env";
 import { client } from "./db";
 import { Err, Ok, Result } from "./result";
@@ -128,7 +129,7 @@ export async function _delete(
     sql: "DELETE FROM 'minecraft-servers' WHERE dir=(?)",
     args: [dir],
   });
-  //await stop(dir);
+  await stop(dir);
   const serviceName = getServiceName(dir);
   await tryRm(`${env.SYSTEMD_PATH}${serviceName}.service`);
   await tryRm(`${env.SYSTEMD_PATH}${serviceName}.socket`);
@@ -190,8 +191,6 @@ export async function run(dir: string, command: string) {
   await fileHandle.close();
 }
 
-const LOG_LINES = "500";
-
 export async function getLogs(dir: string) {
   const { stdout, stderr } = await exec(
     `journalctl -u ${getServiceName(dir)} -n ${LOG_LINES} --no-pager`,
@@ -207,7 +206,7 @@ export async function* streamLogs(dir: string) {
     getServiceName(dir),
     "-f",
     "-n",
-    LOG_LINES,
+    LOG_LINES.toString(),
   ]);
 
   stderr.on("data", (data) => {

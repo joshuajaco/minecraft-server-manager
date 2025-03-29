@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LOG_LINES } from "../../constants";
 
 const decoder = new TextDecoder("utf-8");
 
@@ -48,8 +49,11 @@ export function Logs({
     return () => controller.abort();
   }, [dir]);
 
+  const lines = (logs.match(/\n/g) || []).length;
+
   return (
     <pre className="overflow-auto grow px-4 py-2 border-b flex flex-col-reverse">
+      {lines >= LOG_LINES ? "-- More logs --\n" : ""}
       {logs}
     </pre>
   );
