@@ -37,7 +37,7 @@ export function Autofill({ defaultValue, transform, children }: AutofillProps) {
           {
             slots: {
               source: {
-                onSelectionChange: (key) => setSource(key.toString()),
+                onSelectionChange: (key) => setSource(key?.toString()),
               },
             },
           },

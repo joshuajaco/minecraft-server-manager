@@ -132,12 +132,24 @@ export async function _delete(
   });
   //await stop(dir);
   const serviceName = getServiceName(dir);
-  await fs.rm(`${env.SYSTEMD_PATH}${serviceName}.service`);
-  await fs.rm(`${env.SYSTEMD_PATH}${serviceName}.socket`);
+  await tryRm(`${env.SYSTEMD_PATH}${serviceName}.service`);
+  await tryRm(`${env.SYSTEMD_PATH}${serviceName}.socket`);
 
   if (options.removeFiles) {
     const _path = path.join(env.MINECRAFT_PATH, dir);
-    await fs.rm(_path, { recursive: true, force: true });
+    await tryRm(_path, { recursive: true, force: true });
+  }
+}
+
+async function tryRm(...args: Parameters<typeof fs.rm>) {
+  try {
+    await fs.rm(...args);
+  } catch (error) {
+    if (
+      !(error instanceof Error && "code" in error && error.code === "ENOENT")
+    ) {
+      throw error;
+    }
   }
 }
 
