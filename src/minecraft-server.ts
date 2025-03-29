@@ -58,7 +58,23 @@ export async function create(
   const dir = path.join(env.MINECRAFT_PATH, _dir);
 
   if (createDir) {
-    await fs.mkdir(dir);
+    try {
+      await fs.mkdir(dir);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "EEXIST"
+      ) {
+        await client.execute({
+          sql: "DELETE FROM 'minecraft-servers' WHERE dir=(?)",
+          args: [_dir],
+        });
+        return Err("Directory already exists");
+      }
+
+      throw error;
+    }
     const UID = +env.MINECRAFT_USER_ID;
     const GID = +env.MINECRAFT_GROUP_ID;
     await fs.chown(dir, UID, GID);
