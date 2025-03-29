@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import Logo from "../icon1.svg";
 import { Button } from "../../components";
@@ -10,8 +11,12 @@ export default function ServersLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid gap-6 p-4 container mx-auto">
       <div className="flex items-center gap-2">
-        <Image alt="logo" src={Logo} height={48} />
-        <h1 className="text-xl">Minecraft Server Manager</h1>
+        <h1 className="text-xl">
+          <Link href="/" prefetch={false} className="flex items-center gap-2">
+            <Image alt="logo" src={Logo} height={48} />
+            Minecraft Server Manager
+          </Link>
+        </h1>
         <form className="ml-auto" action={logout}>
           <Button variant="ghost" type="submit">
             Logout
