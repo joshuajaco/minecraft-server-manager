@@ -3,21 +3,34 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { env } from "./env";
 import dbus from "dbus-next";
+import _ from "@dbus-types/systemd";
 import { client } from "./db";
+import { Err } from "./result";
 
-export async function create(name: string) {
+const bus = dbus.systemBus();
+
+async function getDirectories(p: string) {
+  const entries = await fs.readdir(p, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+}
+export async function create(name: string, _dir: string, createDir = true) {
   await client.execute({
-    sql: "INSERT INTO 'minecraft-servers'(name) VALUES (?)",
-    args: [name],
+    sql: "INSERT INTO 'minecraft-servers'(name, dir) VALUES (?, ?)",
+    args: [name, _dir],
   });
 
-  const dir = path.join(env.MINECRAFT_PATH, name);
-  await fs.mkdir(dir);
-  const UID = +env.MINECRAFT_USER_ID;
-  const GID = +env.MINECRAFT_GROUP_ID;
-  await fs.chown(dir, UID, GID);
+  const dir = path.join(env.MINECRAFT_PATH, _dir);
 
-  const serviceName = getServiceName(name);
+  if (createDir) {
+    await fs.mkdir(dir);
+    const UID = +env.MINECRAFT_USER_ID;
+    const GID = +env.MINECRAFT_GROUP_ID;
+    await fs.chown(dir, UID, GID);
+  }
+
+  const serviceName = getServiceName(_dir);
   const service = `[Unit]
 Description=Minecraft Server (${name})
 
@@ -53,47 +66,52 @@ ListenFIFO=%t/${serviceName}.stdin
   );
 }
 
+export async function _import(_dir: string, name: string) {
+  await create(name, _dir, false);
+}
+
 export async function _delete(
-  name: string,
+  dir: string,
   options: { removeFiles?: boolean } = {},
 ) {
   await client.execute({
-    sql: "DELETE FROM 'minecraft-servers' WHERE name=(?)",
-    args: [name],
+    sql: "DELETE FROM 'minecraft-servers' WHERE dir=(?)",
+    args: [dir],
   });
-  await stop(name);
-  const serviceName = getServiceName(name);
+  //await stop(dir);
+  const serviceName = getServiceName(dir);
   await fs.rm(`${env.SYSTEMD_PATH}${serviceName}.service`);
   await fs.rm(`${env.SYSTEMD_PATH}${serviceName}.socket`);
 
   if (options.removeFiles) {
-    const dir = path.join(env.MINECRAFT_PATH, name);
-    await fs.rm(dir, { recursive: true, force: true });
+    const _path = path.join(env.MINECRAFT_PATH, dir);
+    await fs.rm(_path, { recursive: true, force: true });
   }
 }
 
-export async function start(name: string) {
-  const serviceName = getServiceName(name);
+export async function start(dir: string) {
+  const serviceName = getServiceName(dir);
   const manager = await getManager();
   await manager.StartUnit(`${serviceName}.service`, "replace");
 }
 
-export async function restart(name: string) {
-  const serviceName = getServiceName(name);
+export async function restart(dir: string) {
+  const serviceName = getServiceName(dir);
   const manager = await getManager();
   await manager.RestartUnit(`${serviceName}.service`, "replace");
 }
 
-export async function stop(name: string) {
-  const serviceName = getServiceName(name);
+export async function stop(dir: string) {
+  const serviceName = getServiceName(dir);
   const manager = await getManager();
   await manager.StopUnit(`${serviceName}.service`, "replace");
 }
 
-export async function getStatus(name: string): Promise<"active" | "inactive"> {
-  const serviceName = getServiceName(name);
-  const bus = dbus.systemBus();
-  const manager = await getManager(bus);
+export type Status = "active" | "inactive" | "deactivating";
+
+export async function getStatus(dir: string): Promise<Status> {
+  const serviceName = getServiceName(dir);
+  const manager = await getManager();
   const path = await manager.LoadUnit(`${serviceName}.service`);
   const unit = await bus.getProxyObject("org.freedesktop.systemd1", path);
   const properties = unit.getInterface("org.freedesktop.DBus.Properties");
@@ -104,13 +122,12 @@ export async function getStatus(name: string): Promise<"active" | "inactive"> {
   return status.value;
 }
 
-async function run(name: string, command: string) {
-  const serviceName = getServiceName(name);
+async function run(dir: string, command: string) {
+  const serviceName = getServiceName(dir);
   // await exec(`echo "${command}" > /run/${serviceName}.stdin`);
 }
 
-async function getManager(_bus?: dbus.MessageBus) {
-  const bus = _bus ?? dbus.systemBus();
+async function getManager() {
   const systemd = await bus.getProxyObject(
     "org.freedesktop.systemd1",
     "/org/freedesktop/systemd1",
@@ -118,6 +135,6 @@ async function getManager(_bus?: dbus.MessageBus) {
   return systemd.getInterface("org.freedesktop.systemd1.Manager");
 }
 
-function getServiceName(name: string) {
-  return `minecraft-server-${name}`;
+function getServiceName(dir: string) {
+  return `minecraft-server-${dir}`;
 }

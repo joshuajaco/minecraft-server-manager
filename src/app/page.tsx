@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -8,18 +9,24 @@ import {
 } from "next/cache";
 import Image from "next/image";
 import { Err, Ok, Result } from "../result";
-import { client, type Server } from "../db";
+import { client, MinecraftServer } from "../db";
 import { authenticate } from "../auth";
 import { Form } from "../form";
+import { _import, create } from "../minecraft-server";
 import {
-  _delete,
-  create,
-  getStatus,
-  restart,
-  start,
-  stop,
-} from "../minecraft-server";
+  Button,
+  Modal,
+  DialogTrigger,
+  Dialog,
+  Heading,
+  TextField,
+  Select,
+  SelectItem,
+} from "../components";
 import Logo from "./icon1.svg";
+import { Server } from "./_components/Server";
+import { env } from "../env";
+import Link from "next/link";
 
 export default async function HomePage() {
   await authenticate();
@@ -29,26 +36,48 @@ export default async function HomePage() {
         <Image alt="logo" src={Logo} height={48} />
         <h1 className="text-xl">Minecraft Server Manager</h1>
         <form className="ml-auto" action={logout}>
-          <button className="px-2 cursor-pointer">Logout</button>
+          <Button variant="ghost" type="submit">
+            Logout
+          </Button>
         </form>
       </div>
       <div className="px-2 grid gap-4">
-        <h2 className="text-3xl">Servers</h2>
-        <Form
-          action={addServer}
-          validate={validateServer}
-          className="flex gap-4"
-        >
-          <input
-            type="text"
-            name="name"
-            placeholder="name"
-            className="border border-foreground px-2 rounded min-w-0 w-full max-w-64"
-          />
-          <button className="border border-foreground px-2 rounded cursor-pointer">
-            Add
-          </button>
-        </Form>
+        <div className="flex gap-4">
+          <h2 className="text-3xl">Servers</h2>
+          <DialogTrigger>
+            <Button variant="secondary">Create</Button>
+            <Modal isDismissable>
+              <Dialog>
+                <Form
+                  action={createServer}
+                  validate={createServer.validate}
+                  className="px-2 grid gap-4"
+                >
+                  <Heading slot="title" className="text-3xl">
+                    Create Server
+                  </Heading>
+                  <TextField autoFocus label="Name" name="name" />
+                  <TextField label="Directory" name="dir" />
+                  <div className="flex gap-2">
+                    <Button type="submit">Create</Button>
+                    <Button slot="close" variant="secondary">
+                      Cancel
+                    </Button>
+                  </div>
+                </Form>
+              </Dialog>
+            </Modal>
+          </DialogTrigger>
+          <Suspense
+            fallback={
+              <Button variant="secondary" isDisabled>
+                Import
+              </Button>
+            }
+          >
+            <ServerImportButton />
+          </Suspense>
+        </div>
         <Suspense fallback={null}>
           <ServerList />
         </Suspense>
@@ -57,12 +86,52 @@ export default async function HomePage() {
   );
 }
 
+async function ServerImportButton() {
+  const [allDirs, servers] = await Promise.all([
+    getDirectories(),
+    getServers(),
+  ]);
+  const dirs = allDirs.filter(
+    (dir) => !servers.some((server) => server.dir === dir),
+  );
+  return (
+    <DialogTrigger>
+      <Button variant="secondary" isDisabled={dirs.length === 0}>
+        Import
+      </Button>
+      <Modal isDismissable>
+        <Dialog>
+          <Form
+            action={importServer}
+            validate={importServer.validate}
+            className="px-2 grid gap-4"
+          >
+            <Heading slot="title" className="text-3xl">
+              Import Server
+            </Heading>
+            <Select label="Directory" name="dir">
+              {dirs.map((dir) => (
+                <SelectItem key={dir} id={dir}>
+                  {dir}
+                </SelectItem>
+              ))}
+            </Select>
+            <TextField label="Name" name="name" />
+            <div className="flex gap-2">
+              <Button type="submit">Import</Button>
+              <Button slot="close" variant="secondary">
+                Cancel
+              </Button>
+            </div>
+          </Form>
+        </Dialog>
+      </Modal>
+    </DialogTrigger>
+  );
+}
+
 async function ServerList() {
-  "use cache";
-  cacheTag("servers");
-  cacheLife("seconds");
-  const result = await client.execute("SELECT * FROM 'minecraft-servers'");
-  const servers = result.rows as unknown as Server[];
+  const servers = await getServers();
   return (
     <div className="border rounded-lg">
       {servers.map((server) => (
@@ -72,30 +141,19 @@ async function ServerList() {
   );
 }
 
-async function Server({ name }: Server) {
-  const status = await getStatus(name);
-  return (
-    <div className="not-last:border-b border-foreground p-4">
-      <div className="flex items-center gap-3">
-        <h3 className="text-2xl">{name}</h3>
-        <form className="flex items-center gap-3">
-          {status === "active" ? (
-            <button formAction={restartServer.bind(null, name)}>Restart</button>
-          ) : (
-            <button formAction={startServer.bind(null, name)}>Start</button>
-          )}
-          <button
-            disabled={status !== "active"}
-            formAction={stopServer.bind(null, name)}
-          >
-            Stop
-          </button>
-          <button formAction={deleteServer.bind(null, name)}>Delete</button>
-        </form>
-      </div>
-      Status: {status}
-    </div>
-  );
+async function getServers(): Promise<MinecraftServer[]> {
+  "use cache";
+  cacheTag("servers");
+  cacheLife("seconds");
+  const result = await client.execute("SELECT * FROM 'minecraft-servers'");
+  return result.rows.map((r) => ({ ...r })) as unknown as MinecraftServer[];
+}
+
+async function getDirectories() {
+  const entries = await fs.readdir(env.MINECRAFT_PATH, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 }
 
 async function logout() {
@@ -105,48 +163,56 @@ async function logout() {
   redirect("/login");
 }
 
-async function validateServer(
+async function createServer({
+  name,
+  dir,
+}: {
+  name: string;
+  dir: string;
+}): Promise<Result<string, string>> {
+  "use server";
+  await authenticate();
+  await create(name, dir);
+  revalidateTag("servers");
+  return Ok("Server created");
+}
+
+createServer.validate = async (
   formData: FormData,
-): Promise<Result<Server, string>> {
+): Promise<Result<{ name: string; dir: string }, string>> => {
   "use server";
   if (!(formData instanceof FormData)) return Err("Invalid form data");
   const name = formData.get("name");
   if (typeof name !== "string") return Err("Invalid form data");
-  if (!name.match(/^[a-zA-Z0-9-_]*$/)) return Err("Invalid name");
-  return Ok({ name });
-}
+  const dir = formData.get("dir");
+  if (typeof dir !== "string") return Err("Invalid form data");
+  if (!dir.match(/^[a-zA-Z0-9-_]+$/)) return Err("Invalid directory");
+  return Ok({ name, dir });
+};
 
-async function addServer({ name }: Server): Promise<Result<string, string>> {
+async function importServer({
+  dir,
+  name,
+}: {
+  dir: string;
+  name: string;
+}): Promise<Result<string, string>> {
   "use server";
   await authenticate();
-  await create(name);
+  await _import(dir, name);
   revalidateTag("servers");
-  return Ok("Server added");
+  return Ok("Server imported");
 }
 
-async function startServer(name: string): Promise<void> {
+importServer.validate = async (
+  formData: FormData,
+): Promise<Result<{ dir: string; name: string }, string>> => {
   "use server";
-  await authenticate();
-  await start(name);
-  revalidateTag("servers");
-}
-
-async function restartServer(name: string): Promise<void> {
-  "use server";
-  await restart(name);
-  revalidateTag("servers");
-}
-
-async function stopServer(name: string): Promise<void> {
-  "use server";
-  await authenticate();
-  await stop(name);
-  revalidateTag("servers");
-}
-
-async function deleteServer(name: string): Promise<void> {
-  "use server";
-  await authenticate();
-  await _delete(name);
-  revalidateTag("servers");
-}
+  if (!(formData instanceof FormData)) return Err("Invalid form data");
+  const name = formData.get("name");
+  if (typeof name !== "string") return Err("Invalid form data");
+  const dir = formData.get("dir");
+  if (typeof dir !== "string") return Err("Invalid form data");
+  if (!dir.match(/^[a-zA-Z0-9-_]+$/)) return Err("Invalid directory");
+  return Ok({ name, dir });
+};

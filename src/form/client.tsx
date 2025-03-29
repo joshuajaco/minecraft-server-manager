@@ -1,7 +1,8 @@
 "use client";
 
-import { ReactNode, useActionState } from "react";
+import React, { ReactNode, useActionState } from "react";
 import { Result } from "../result";
+import { AlertCircleIcon, InfoIcon } from "lucide-react";
 
 type Props = {
   action: (_: unknown, formData: FormData) => Promise<Result<string, string>>;
@@ -15,7 +16,14 @@ export function FormClient({ action, className, children }: Props) {
     <form action={formAction} className={className}>
       {children}
       {submitResult && (
-        <div>{submitResult.ok ? submitResult.val : submitResult.err}</div>
+        <div className={"flex items-center gap-2"}>
+          {submitResult.ok ? (
+            <InfoIcon aria-hidden />
+          ) : (
+            <AlertCircleIcon aria-hidden className="text-red-600" />
+          )}
+          {submitResult.ok ? submitResult.val : submitResult.err}
+        </div>
       )}
     </form>
   );

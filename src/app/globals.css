@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@plugin 'tailwindcss-react-aria-components';
+@plugin 'tailwindcss-animate';
 
 @theme inline {
   --color-background: var(--background);
@@ -12,6 +14,7 @@
   --foreground: #171717;
   background: var(--background);
   color: var(--foreground);
+  color-scheme: dark light;
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
@@ -19,5 +22,17 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+  }
+}
+
+/* Scale up hit targets on high resolution mobile devices. */
+@media (min-resolution: 200dpi) {
+  html {
+    font-size: 18px;
+  }
+
+  .text-sm {
+    /* ensure minimum font size of 16px */
+    font-size: 0.9rem;
   }
 }

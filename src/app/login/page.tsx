@@ -3,6 +3,7 @@ import { Err, Ok, Result } from "../../result";
 import { login } from "../../auth";
 import { Form } from "../../form";
 import Logo from "../icon1.svg";
+import { Button, TextField } from "../../components";
 
 export default function LoginPage() {
   return (
@@ -15,15 +16,8 @@ export default function LoginPage() {
           validate={validate}
           className="flex flex-col gap-3 p-3 items-center"
         >
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            className="border border-foreground px-2 rounded min-w-0 w-full"
-          />
-          <button className="border border-foreground px-2 rounded w-fit cursor-pointer">
-            Login
-          </button>
+          <TextField type="password" name="password" placeholder="Password" />
+          <Button type="submit">Login</Button>
         </Form>
       </div>
     </div>
