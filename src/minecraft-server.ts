@@ -190,9 +190,11 @@ export async function run(dir: string, command: string) {
   await fileHandle.close();
 }
 
+const LOG_LINES = "500";
+
 export async function getLogs(dir: string) {
   const { stdout, stderr } = await exec(
-    `journalctl -u ${getServiceName(dir)} -n 100 --no-pager`,
+    `journalctl -u ${getServiceName(dir)} -n ${LOG_LINES} --no-pager`,
     { encoding: "utf-8" },
   );
   if (stderr) console.error("journalctl error", stderr);
@@ -205,7 +207,7 @@ export async function* streamLogs(dir: string) {
     getServiceName(dir),
     "-f",
     "-n",
-    "100",
+    LOG_LINES,
   ]);
 
   stderr.on("data", (data) => {

@@ -48,7 +48,11 @@ export function Logs({
     return () => controller.abort();
   }, [dir]);
 
-  return <pre className="overflow-auto grow px-4 py-2 border-b">{logs}</pre>;
+  return (
+    <pre className="overflow-auto grow px-4 py-2 border-b flex flex-col-reverse">
+      {logs}
+    </pre>
+  );
 }
 
 function ignoreAbortError(error: unknown) {
