@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { LOG_LINES } from "../../constants";
+import { DocumentVisibilityListener } from "../../lib/dom/DocumentVisibilityListener";
 
 const decoder = new TextDecoder("utf-8");
 
@@ -15,38 +16,32 @@ export function Logs({
   const [logs, setLogs] = useState(initialLogs);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let controller = new AbortController();
 
-    async function fetchLogs() {
+    async function startPolling() {
+      controller = new AbortController();
       const { signal } = controller;
-      const response = await fetch(`/api/logs?dir=${dir}`, { signal });
-
-      if (!response.body) return;
-
-      const reader = response.body.getReader();
-
-      let first = true;
-
       while (true) {
-        const { done, value } = await reader.read();
-
-        if (value) {
-          const v = decoder.decode(value);
-          if (first) {
-            first = false;
-            setLogs(v);
-          } else {
-            setLogs((text) => text + v);
-          }
-        }
-
-        if (done) break;
+        if (signal.aborted) break;
+        await fetchLogs({ dir, signal, setLogs }).catch(ignoreAbortError);
       }
     }
 
-    void fetchLogs().catch(ignoreAbortError);
+    function stopPolling() {
+      controller.abort();
+    }
 
-    return () => controller.abort();
+    if (document.visibilityState === "visible") void startPolling();
+
+    const listener = DocumentVisibilityListener({
+      visible: startPolling,
+      hidden: stopPolling,
+    });
+
+    return () => {
+      stopPolling();
+      listener.remove();
+    };
   }, [dir]);
 
   const lines = (logs.match(/\n/g) || []).length;
@@ -57,6 +52,41 @@ export function Logs({
       {logs}
     </pre>
   );
+}
+
+async function fetchLogs({
+  dir,
+  signal: _signal,
+  setLogs,
+}: {
+  dir: string;
+  signal: AbortSignal;
+  setLogs: Dispatch<SetStateAction<string>>;
+}) {
+  const signal = AbortSignal.any([_signal, AbortSignal.timeout(30_000)]);
+  const response = await fetch(`/api/logs?dir=${dir}`, { signal });
+
+  if (!response.body) return;
+
+  const reader = response.body.getReader();
+
+  let first = true;
+
+  while (true) {
+    const { done, value } = await reader.read();
+
+    if (value) {
+      const v = decoder.decode(value);
+      if (first) {
+        first = false;
+        setLogs(v);
+      } else {
+        setLogs((text) => text + v);
+      }
+    }
+
+    if (done) break;
+  }
 }
 
 function ignoreAbortError(error: unknown) {

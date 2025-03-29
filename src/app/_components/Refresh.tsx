@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { DocumentVisibilityListener } from "../../lib/dom/DocumentVisibilityListener";
 import { refresh } from "./refresh";
 
 export function Refresh({ tags }: { tags: string[] }) {
@@ -16,29 +17,16 @@ export function Refresh({ tags }: { tags: string[] }) {
       interval = null;
     }
 
-    function onVisibilityChange() {
-      switch (document.visibilityState) {
-        case "visible":
-          startPolling();
-          void refresh(...tags);
-          break;
-        case "hidden":
-          stopPolling();
-          break;
-        default:
-          throw new Error(
-            `Unsupported document visibilityState ${document.visibilityState satisfies never}`,
-          );
-      }
-    }
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
     if (document.visibilityState === "visible") startPolling();
+
+    const listener = DocumentVisibilityListener({
+      visible: startPolling,
+      hidden: stopPolling,
+    });
 
     return () => {
       stopPolling();
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      listener.remove();
     };
   }, [...tags]);
 
