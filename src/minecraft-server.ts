@@ -199,6 +199,24 @@ export async function getLogs(dir: string) {
   return stdout;
 }
 
+export async function* streamLogs(dir: string) {
+  const journalctl = cp.spawn("journalctl", [
+    "-u",
+    getServiceName(dir),
+    "-f",
+    "-n",
+    "100",
+  ]);
+
+  for await (const chunk of journalctl.stdout) {
+    yield chunk;
+  }
+
+  journalctl.stderr.on("data", (data) => {
+    console.error("Error from journalctl:", data.toString());
+  });
+}
+
 async function getManager() {
   const systemd = await bus.getProxyObject(
     "org.freedesktop.systemd1",

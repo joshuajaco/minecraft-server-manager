@@ -10,6 +10,7 @@ import { Button, TextField } from "../../../components";
 import { Err, Ok, Result } from "../../../result";
 import { getLogs, run } from "../../../minecraft-server";
 import { Form } from "../../../form";
+import { Logs } from "../../_components/Logs";
 
 export default async function DetailsPage({
   params,
@@ -20,10 +21,11 @@ export default async function DetailsPage({
   const { dir } = await params;
   const server = await getServer(dir);
   if (!server) notFound();
+  const logs = await getLogs(dir);
   return (
     <div className="border rounded-lg flex flex-col overflow-auto grow">
       <Server {...server} />
-      <Logs dir={dir} />
+      <Logs initialLogs={logs} dir={dir} />
       <Form
         reset
         action={runCommand}
@@ -31,18 +33,13 @@ export default async function DetailsPage({
         className="flex gap-2 p-4"
       >
         <input type="hidden" name="dir" value={dir} />
-        <TextField name="command" />
+        <TextField name="command" aria-label="ay" />
         <Button type="submit" variant="secondary">
           Run
         </Button>
       </Form>
     </div>
   );
-}
-
-async function Logs({ dir }: { dir: string }) {
-  const logs = await getLogs(dir);
-  return <pre className="overflow-auto grow px-4 py-2 border-b">{logs}</pre>;
 }
 
 async function getServer(dir: string): Promise<MinecraftServer | null> {

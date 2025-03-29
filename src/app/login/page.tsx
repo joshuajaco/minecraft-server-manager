@@ -16,7 +16,12 @@ export default function LoginPage() {
           validate={validate}
           className="flex flex-col gap-3 p-3 items-center"
         >
-          <TextField type="password" name="password" placeholder="Password" />
+          <TextField
+            type="password"
+            name="password"
+            placeholder="Password"
+            aria-label="Password"
+          />
           <Button type="submit">Login</Button>
         </Form>
       </div>
