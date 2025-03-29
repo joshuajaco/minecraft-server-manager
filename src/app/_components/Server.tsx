@@ -121,11 +121,10 @@ const Status: Record<ActiveState, string> = {
 function StatusIcon({ status }: { status: ActiveState }) {
   switch (status) {
     case "active":
-      return <div className="size-4 bg-red-600 rounded-full"></div>;
+      return <div className="size-4 bg-green-700 rounded-full" />;
     case "inactive":
-      return <div className="size-4 bg-red-600 rounded-full"></div>;
     case "deactivating":
-      return <div className="size-4 bg-red-600 rounded-full"></div>;
+      return <div className="size-4 bg-red-700 rounded-full" />;
     default:
       throw new Error(`Unknown status: ${status satisfies never}`);
   }
