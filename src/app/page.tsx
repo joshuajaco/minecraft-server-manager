@@ -9,6 +9,7 @@ import {
 } from "next/cache";
 import Image from "next/image";
 import { Err, Ok, Result } from "../result";
+import { env } from "../env";
 import { client, MinecraftServer } from "../db";
 import { authenticate } from "../auth";
 import { Form } from "../form";
@@ -25,8 +26,7 @@ import {
 } from "../components";
 import Logo from "./icon1.svg";
 import { Server } from "./_components/Server";
-import { env } from "../env";
-import Link from "next/link";
+import { Autofill, capitalize, sanitize } from "./_components/Autofill";
 
 export default async function HomePage() {
   await authenticate();
@@ -56,8 +56,15 @@ export default async function HomePage() {
                   <Heading slot="title" className="text-3xl">
                     Create Server
                   </Heading>
-                  <TextField autoFocus label="Name" name="name" />
-                  <TextField label="Directory" name="dir" />
+                  <Autofill transform={sanitize}>
+                    <TextField
+                      slot="source"
+                      autoFocus
+                      label="Name"
+                      name="name"
+                    />
+                    <TextField slot="target" label="Directory" name="dir" />
+                  </Autofill>
                   <div className="flex gap-2">
                     <Button type="submit">Create</Button>
                     <Button slot="close" variant="secondary">
@@ -109,14 +116,16 @@ async function ServerImportButton() {
             <Heading slot="title" className="text-3xl">
               Import Server
             </Heading>
-            <Select label="Directory" name="dir">
-              {dirs.map((dir) => (
-                <SelectItem key={dir} id={dir}>
-                  {dir}
-                </SelectItem>
-              ))}
-            </Select>
-            <TextField label="Name" name="name" />
+            <Autofill transform={capitalize}>
+              <Select label="Directory" name="dir" slot="source">
+                {dirs.map((dir) => (
+                  <SelectItem key={dir} id={dir}>
+                    {dir}
+                  </SelectItem>
+                ))}
+              </Select>
+              <TextField label="Name" name="name" slot="target" />
+            </Autofill>
             <div className="flex gap-2">
               <Button type="submit">Import</Button>
               <Button slot="close" variant="secondary">
