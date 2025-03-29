@@ -180,9 +180,10 @@ export async function getStatus(dir: string): Promise<ActiveState> {
   return status.value;
 }
 
-async function run(dir: string, command: string) {
-  const serviceName = getServiceName(dir);
-  // await exec(`echo "${command}" > /run/${serviceName}.stdin`);
+export async function run(dir: string, command: string) {
+  const fileHandle = await fs.open(`/run/${getServiceName(dir)}.stdin`, "w");
+  await fileHandle.write(command + "\n");
+  await fileHandle.close();
 }
 
 async function getManager() {

@@ -4,16 +4,23 @@ import { Validation } from "./validation";
 import { FormClient } from "./client";
 
 type Props<T> = {
-  action: (values: T) => Promise<Result<string, string>>;
+  action: (values: T) => Promise<Result<string | undefined | void, string>>;
   validate: Validation<T>;
+  reset?: boolean;
   className?: string;
   children?: ReactNode;
 };
 
-export function Form<T>({ action, validate, className, children }: Props<T>) {
+export function Form<T>({
+  action,
+  reset,
+  validate,
+  className,
+  children,
+}: Props<T>) {
   async function serverAction(
     formData: FormData,
-  ): Promise<Result<string, string>> {
+  ): Promise<Result<string | undefined | void, string>> {
     "use server";
     const values = await validate(formData);
     if (!values.ok) return values;
@@ -21,7 +28,7 @@ export function Form<T>({ action, validate, className, children }: Props<T>) {
   }
 
   return (
-    <FormClient action={serverAction} className={className}>
+    <FormClient action={serverAction} reset={reset} className={className}>
       {children}
     </FormClient>
   );

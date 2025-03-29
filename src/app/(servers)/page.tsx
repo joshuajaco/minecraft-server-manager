@@ -201,7 +201,7 @@ importServer.validate = async (
   const dir = formData.get("dir");
   if (typeof dir !== "string") return Err("Invalid form data");
   if (!dir.match(/^[a-zA-Z0-9-_]+$/)) return Err("Invalid directory");
-  return Ok({ name, dir: sanitizeDir(dir) });
+  return Ok({ name, dir });
 };
 
 function sanitizeDir(value: string): string {
