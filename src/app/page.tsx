@@ -27,6 +27,7 @@ import {
 import Logo from "./icon1.svg";
 import { Server } from "./_components/Server";
 import { Autofill, capitalize, sanitize } from "./_components/Autofill";
+import { Refresh } from "./_components/Refresh";
 
 export default async function HomePage() {
   await authenticate();
@@ -144,6 +145,7 @@ async function ServerList() {
   const servers = await getServers();
   return (
     <div className="border rounded-lg">
+      <Refresh tags={["servers"]} />
       {servers.map((server) => (
         <Server key={server.name} {...server} />
       ))}
