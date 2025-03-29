@@ -105,24 +105,24 @@ export async function Server({ name, dir }: MinecraftServer) {
 
 async function startServer(dir: string): Promise<void> {
   "use server";
-  if (typeof dir !== "string") throw new Error("Invalid dir");
   await authenticate();
+  if (typeof dir !== "string") throw new Error("Invalid dir");
   await start(dir);
   revalidateTag("servers");
 }
 
 async function restartServer(dir: string): Promise<void> {
   "use server";
-  if (typeof dir !== "string") throw new Error("Invalid dir");
   await authenticate();
+  if (typeof dir !== "string") throw new Error("Invalid dir");
   await restart(dir);
   revalidateTag("servers");
 }
 
 async function stopServer(dir: string): Promise<void> {
   "use server";
-  if (typeof dir !== "string") throw new Error("Invalid dir");
   await authenticate();
+  if (typeof dir !== "string") throw new Error("Invalid dir");
   await stop(dir);
   revalidateTag("servers");
 }
@@ -135,7 +135,6 @@ async function deleteServer({
   removeFiles: boolean;
 }): Promise<Result<string, string>> {
   "use server";
-  await authenticate();
   await _delete(dir, { removeFiles });
   revalidateTag("servers");
   return Ok("Server deleted");
@@ -145,6 +144,7 @@ deleteServer.validate = async (
   formData: FormData,
 ): Promise<Result<{ dir: string; removeFiles: boolean }, string>> => {
   "use server";
+  await authenticate();
   if (!(formData instanceof FormData)) return Err("Invalid form data");
   const dir = formData.get("dir");
   if (typeof dir !== "string") return Err("Invalid form data");

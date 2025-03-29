@@ -13,7 +13,8 @@ import {
 import { MenuItem } from "./Menu";
 import { SearchField } from "./SearchField";
 
-export interface AutocompleteProps<T extends object> extends Omit<AriaAutocompleteProps, "children"> {
+export interface AutocompleteProps<T extends object>
+  extends Omit<AriaAutocompleteProps, "children"> {
   children: React.ReactNode | ((item: T) => React.ReactNode);
   items?: Iterable<T>;
   label?: string;
@@ -47,17 +48,19 @@ export function AutocompleteItem(props: MenuItemProps) {
 }
 
 export interface AutocompleteSectionProps<T> extends AriaMenuSectionProps<T> {
-  title?: string
-  items?: any
+  title?: string;
+  items?: any;
 }
 
-export function AutocompleteSection<T extends object>(props: AutocompleteSectionProps<T>) {
+export function AutocompleteSection<T extends object>(
+  props: AutocompleteSectionProps<T>,
+) {
   return (
     <AriaMenuSection className="first:-mt-[5px] after:content-[''] after:block after:h-[5px]">
-      <Header className="text-sm font-semibold text-gray-500 dark:text-zinc-300 px-4 py-1 truncate sticky -top-[5px] -mt-px -mx-1 z-10 bg-gray-100/60 dark:bg-zinc-700/60 backdrop-blur-md supports-[-moz-appearance:none]:bg-gray-100 border border-gray-200 dark:border-zinc-700 [&+*]:mt-1 rounded">{props.title}</Header>
-      <Collection items={props.items}>
-        {props.children}
-      </Collection>
+      <Header className="text-sm font-semibold text-gray-500 dark:text-zinc-300 px-4 py-1 truncate sticky -top-[5px] -mt-px -mx-1 z-10 bg-gray-100/60 dark:bg-zinc-700/60 backdrop-blur-md supports-[-moz-appearance:none]:bg-gray-100 border border-gray-200 dark:border-zinc-700 [&+*]:mt-1 rounded">
+        {props.title}
+      </Header>
+      <Collection items={props.items}>{props.children}</Collection>
     </AriaMenuSection>
   );
 }

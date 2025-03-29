@@ -180,7 +180,6 @@ async function createServer({
   dir: string;
 }): Promise<Result<string, string>> {
   "use server";
-  await authenticate();
   const result = await create(name, dir);
   if (!result.ok) return result;
   revalidateTag("servers");
@@ -191,6 +190,7 @@ createServer.validate = async (
   formData: FormData,
 ): Promise<Result<{ name: string; dir: string }, string>> => {
   "use server";
+  await authenticate();
   if (!(formData instanceof FormData)) return Err("Invalid form data");
   const name = formData.get("name");
   if (typeof name !== "string") return Err("Invalid form data");
@@ -208,7 +208,6 @@ async function importServer({
   name: string;
 }): Promise<Result<string, string>> {
   "use server";
-  await authenticate();
   const result = await _import(dir, name);
   if (!result.ok) return result;
   revalidateTag("servers");
@@ -219,6 +218,7 @@ importServer.validate = async (
   formData: FormData,
 ): Promise<Result<{ dir: string; name: string }, string>> => {
   "use server";
+  await authenticate();
   if (!(formData instanceof FormData)) return Err("Invalid form data");
   const name = formData.get("name");
   if (typeof name !== "string") return Err("Invalid form data");
