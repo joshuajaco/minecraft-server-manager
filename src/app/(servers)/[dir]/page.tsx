@@ -33,7 +33,7 @@ export default async function DetailsPage({
         className="flex gap-2 p-4"
       >
         <input type="hidden" name="dir" value={dir} />
-        <TextField name="command" aria-label="ay" />
+        <TextField name="command" aria-label="Commanmd" className="font-mono" />
         <Button type="submit" variant="secondary">
           Run
         </Button>

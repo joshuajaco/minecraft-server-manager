@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authenticate } from "../../../auth";
 import { streamLogs } from "../../../minecraft-server";
-
-const encoder = new TextEncoder();
 
 export async function GET(request: NextRequest) {
   const dir = new URL(request.url).searchParams.get("dir");
   if (!dir) return new NextResponse("Missing dir", { status: 400 });
+
+  await authenticate();
 
   const logs = streamLogs(dir);
 
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
       if (done) {
         controller.close();
       } else {
-        controller.enqueue(encoder.encode(value));
+        controller.enqueue(value);
       }
     },
   });

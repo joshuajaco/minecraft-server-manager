@@ -200,7 +200,7 @@ export async function getLogs(dir: string) {
 }
 
 export async function* streamLogs(dir: string) {
-  const journalctl = cp.spawn("journalctl", [
+  const { stdout, stderr } = cp.spawn("journalctl", [
     "-u",
     getServiceName(dir),
     "-f",
@@ -208,13 +208,15 @@ export async function* streamLogs(dir: string) {
     "100",
   ]);
 
-  for await (const chunk of journalctl.stdout) {
-    yield chunk;
-  }
-
-  journalctl.stderr.on("data", (data) => {
+  stderr.on("data", (data) => {
     console.error("Error from journalctl:", data.toString());
   });
+
+  for await (const _chunk of stdout) {
+    if (!(_chunk instanceof Buffer)) throw new Error("Expected Buffer");
+    const chunk: Buffer = _chunk;
+    yield chunk;
+  }
 }
 
 async function getManager() {
