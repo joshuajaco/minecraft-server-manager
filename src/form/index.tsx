@@ -1,5 +1,5 @@
-import { Result } from "../result";
 import { ReactNode } from "react";
+import { Result } from "../result";
 import { Validation } from "./validation";
 import { FormClient } from "./client";
 
@@ -11,8 +11,7 @@ type Props<T> = {
 };
 
 export function Form<T>({ action, validate, className, children }: Props<T>) {
-  async function wrappedAction(
-    _: unknown,
+  async function serverAction(
     formData: FormData,
   ): Promise<Result<string, string>> {
     "use server";
@@ -22,7 +21,7 @@ export function Form<T>({ action, validate, className, children }: Props<T>) {
   }
 
   return (
-    <FormClient action={wrappedAction} className={className}>
+    <FormClient action={serverAction} className={className}>
       {children}
     </FormClient>
   );
