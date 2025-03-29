@@ -1,3 +1,6 @@
+import { revalidateTag } from "next/cache";
+import Link from "next/link";
+import * as Icons from "lucide-react";
 import { type MinecraftServer } from "../../db";
 import {
   _delete,
@@ -17,10 +20,8 @@ import {
   Tooltip,
   TooltipTrigger,
 } from "../../components";
-import * as Icons from "lucide-react";
 import { Form } from "../../form";
 import { authenticate } from "../../auth";
-import { revalidateTag } from "next/cache";
 import { Err, Ok, Result } from "../../result";
 
 export async function Server({ name, dir }: MinecraftServer) {
@@ -28,7 +29,11 @@ export async function Server({ name, dir }: MinecraftServer) {
   return (
     <div className="not-last:border-b border-foreground p-4">
       <div className="flex items-center gap-3">
-        <h3 className="text-2xl">{name}</h3>
+        <h3 className="text-2xl">
+          <Link href={`/${dir}`} prefetch={false}>
+            {name}
+          </Link>
+        </h3>
         <form className="flex items-center gap-1">
           {status === "active" ? (
             <TooltipTrigger>
