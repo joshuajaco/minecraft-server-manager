@@ -1,6 +1,12 @@
 "use client";
 
-import React, { ReactNode, useActionState, useContext } from "react";
+import {
+  FormEvent,
+  ReactNode,
+  startTransition,
+  useContext,
+  useState,
+} from "react";
 import { OverlayTriggerStateContext } from "react-aria-components";
 import { AlertCircleIcon, InfoIcon } from "lucide-react";
 import { Result } from "../result";
@@ -14,19 +20,20 @@ type Props = {
 export function FormClient({ action, className, children }: Props) {
   const overlayTrigger = useContext(OverlayTriggerStateContext);
 
-  async function clientAction(
-    _: unknown,
-    formData: FormData,
-  ): Promise<Result<string, string>> {
-    const result = await action(formData);
-    if (result.ok) overlayTrigger?.close();
-    return result;
+  const [submitResult, setSubmitResult] = useState<Result<string, string>>();
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    startTransition(async () => {
+      const result = await action(new FormData(form));
+      if (result.ok) overlayTrigger?.close();
+      setSubmitResult(result);
+    });
   }
 
-  const [submitResult, formAction] = useActionState(clientAction, null);
-
   return (
-    <form action={formAction} className={className}>
+    <form onSubmit={onSubmit} className={className}>
       {children}
       {submitResult?.ok && !overlayTrigger && (
         <div className="flex items-center gap-2">
