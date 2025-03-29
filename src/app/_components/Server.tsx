@@ -5,6 +5,7 @@ import {
   restart,
   start,
   stop,
+  ActiveState,
 } from "../../minecraft-server";
 import {
   Button,
@@ -98,9 +99,36 @@ export async function Server({ name, dir }: MinecraftServer) {
           </DialogTrigger>
         </form>
       </div>
-      Status: {status}
+      <dl className="grid grid-cols-[auto_auto] w-fit gap-x-3">
+        <dt>Status:</dt>
+        <dd className="flex items-center gap-1">
+          <StatusIcon status={status} />
+          {Status[status]}
+        </dd>
+        <dt>Directory:</dt>
+        <dd className="font-mono">/{dir}</dd>
+      </dl>
     </div>
   );
+}
+
+const Status: Record<ActiveState, string> = {
+  active: "Active",
+  inactive: "Inactive",
+  deactivating: "Deactivating",
+};
+
+function StatusIcon({ status }: { status: ActiveState }) {
+  switch (status) {
+    case "active":
+      return <div className="size-4 bg-red-600 rounded-full"></div>;
+    case "inactive":
+      return <div className="size-4 bg-red-600 rounded-full"></div>;
+    case "deactivating":
+      return <div className="size-4 bg-red-600 rounded-full"></div>;
+    default:
+      throw new Error(`Unknown status: ${status satisfies never}`);
+  }
 }
 
 async function startServer(dir: string): Promise<void> {

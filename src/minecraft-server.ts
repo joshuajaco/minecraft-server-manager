@@ -10,12 +10,6 @@ import { LibsqlError } from "@libsql/client";
 
 const bus = dbus.systemBus();
 
-async function getDirectories(p: string) {
-  const entries = await fs.readdir(p, { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
-}
 export async function create(
   name: string,
   _dir: string,
@@ -171,9 +165,9 @@ export async function stop(dir: string) {
   await manager.StopUnit(`${serviceName}.service`, "replace");
 }
 
-export type Status = "active" | "inactive" | "deactivating";
+export type ActiveState = "active" | "inactive" | "deactivating";
 
-export async function getStatus(dir: string): Promise<Status> {
+export async function getStatus(dir: string): Promise<ActiveState> {
   const serviceName = getServiceName(dir);
   const manager = await getManager();
   const path = await manager.LoadUnit(`${serviceName}.service`);
