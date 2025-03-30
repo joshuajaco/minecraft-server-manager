@@ -168,7 +168,7 @@ export async function stop(dir: string) {
   await manager.StopUnit(`${serviceName}.service`, "replace");
 }
 
-export type ActiveState = "active" | "inactive" | "deactivating";
+export type ActiveState = "active" | "inactive" | "deactivating" | "failed";
 
 export async function getStatus(dir: string): Promise<ActiveState> {
   const serviceName = getServiceName(dir);
@@ -191,7 +191,7 @@ export async function run(dir: string, command: string) {
 
 export async function getLogs(dir: string) {
   const unit = getServiceName(dir);
-  const generator = journalctl({ unit: "test-counter", limit: LOG_LINES });
+  const generator = journalctl({ unit, limit: LOG_LINES });
   const { entries, result } = await AsyncIterable.collect(generator);
   if (!result.ok) return result;
   const lines = entries.flat();
@@ -208,7 +208,7 @@ export type LogsChunk = {
 export function streamLogs(dir: string, cursor: string | undefined) {
   const unit = getServiceName(dir);
   const generator = journalctl({
-    unit: "test-counter",
+    unit,
     follow: true,
     limit: LOG_LINES,
     pager: true,
