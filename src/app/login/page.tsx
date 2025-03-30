@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Err, Ok, Result } from "../../result";
+import { Result, Ok, Err } from "../../lib/result";
 import { login } from "../../auth";
 import { Form } from "../../form";
 import Logo from "../icon1.svg";

@@ -7,7 +7,7 @@ import {
 import { notFound } from "next/navigation";
 import { Server } from "../../_components/Server";
 import { Button, TextField } from "../../../components";
-import { Err, Ok, Result } from "../../../result";
+import { Result, Ok, Err } from "../../../lib/result";
 import { getLogs, run } from "../../../minecraft-server";
 import { Form } from "../../../form";
 import { Logs } from "../../_components/Logs";
@@ -21,11 +21,11 @@ export default async function DetailsPage({
   const { dir } = await params;
   const server = await getServer(dir);
   if (!server) notFound();
-  const logs = await getLogs(dir);
+  const { logs, cursor } = Result.unwrap(await getLogs(dir));
   return (
     <div className="border rounded-lg flex flex-col overflow-auto grow">
       <Server {...server} />
-      <Logs initialLogs={logs} dir={dir} />
+      <Logs initialLogs={logs} initialCursor={cursor} dir={dir} />
       <Form
         reset
         action={runCommand}

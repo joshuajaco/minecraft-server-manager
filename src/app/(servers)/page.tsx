@@ -5,7 +5,7 @@ import {
   unstable_cacheLife as cacheLife,
   revalidateTag,
 } from "next/cache";
-import { Err, Ok, Result } from "../../result";
+import { Err, Ok, Result } from "../../lib/result";
 import { env } from "../../env";
 import { client, MinecraftServer } from "../../db";
 import { authenticate } from "../../auth";

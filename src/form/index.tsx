@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Result } from "../result";
+import { Result } from "../lib/result";
 import { Validation } from "./validation";
 import { FormClient } from "./client";
 

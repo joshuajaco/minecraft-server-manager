@@ -2,16 +2,14 @@ import "server-only";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { LibsqlError } from "@libsql/client";
-import * as cp from "node:child_process";
-import { promisify } from "node:util";
 import dbus from "dbus-next";
 import _ from "@dbus-types/systemd";
 import { LOG_LINES } from "./constants";
 import { env } from "./env";
 import { client } from "./db";
-import { Err, Ok, Result } from "./result";
-
-const exec = promisify(cp.exec);
+import { Result, Ok, Err } from "./lib/result";
+import { AsyncIterable } from "./lib/async-iterable";
+import { journalctl } from "./lib/system/journalctl";
 
 const bus = dbus.systemBus();
 
@@ -192,32 +190,38 @@ export async function run(dir: string, command: string) {
 }
 
 export async function getLogs(dir: string) {
-  const { stdout, stderr } = await exec(
-    `journalctl -u ${getServiceName(dir)} -n ${LOG_LINES} --no-pager`,
-    { encoding: "utf-8" },
-  );
-  if (stderr) console.error("journalctl error", stderr);
-  return stdout;
+  const unit = getServiceName(dir);
+  const generator = journalctl({ unit: "test-counter", limit: LOG_LINES });
+  const { entries, result } = await AsyncIterable.collect(generator);
+  if (!result.ok) return result;
+  const lines = entries.flat();
+  const logs = lines.map((line) => line.message).join("\n") + "\n";
+  const cursor = lines.at(-1)?.cursor;
+  return Ok({ logs, cursor });
 }
 
-export async function* streamLogs(dir: string) {
-  const { stdout, stderr } = cp.spawn("journalctl", [
-    "-u",
-    getServiceName(dir),
-    "-f",
-    "-n",
-    LOG_LINES.toString(),
-  ]);
+export type LogsChunk = {
+  logs: string;
+  cursor?: string;
+};
 
-  stderr.on("data", (data) => {
-    console.error("Error from journalctl:", data.toString());
+export function streamLogs(dir: string, cursor: string | undefined) {
+  const unit = getServiceName(dir);
+  const generator = journalctl({
+    unit: "test-counter",
+    follow: true,
+    limit: LOG_LINES,
+    pager: true,
+    cursor,
   });
 
-  for await (const _chunk of stdout) {
-    if (!(_chunk instanceof Buffer)) throw new Error("Expected Buffer");
-    const chunk: Buffer = _chunk;
-    yield chunk;
-  }
+  return AsyncIterable.map(
+    generator,
+    (value): LogsChunk => ({
+      logs: value.map((line) => line.message).join("\n") + "\n",
+      cursor: value.at(-1)?.cursor,
+    }),
+  );
 }
 
 async function getManager() {

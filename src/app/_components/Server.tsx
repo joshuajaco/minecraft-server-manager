@@ -22,7 +22,7 @@ import {
 } from "../../components";
 import { Form } from "../../form";
 import { authenticate } from "../../auth";
-import { Err, Ok, Result } from "../../result";
+import { Err, Ok, Result } from "../../lib/result";
 
 export async function Server({ name, dir }: MinecraftServer) {
   const status = await getStatus(dir);

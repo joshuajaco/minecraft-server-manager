@@ -10,7 +10,7 @@ import {
 import { requestFormReset } from "react-dom";
 import { OverlayTriggerStateContext } from "react-aria-components";
 import { AlertCircleIcon, InfoIcon } from "lucide-react";
-import { Result } from "../result";
+import { Result } from "../lib/result";
 
 type Props = {
   action: (
